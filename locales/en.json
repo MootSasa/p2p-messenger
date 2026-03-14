@@ -3,11 +3,9 @@
     "sys_connected": "Connected to {address}!",
     "sys_disconnected": "Peer disconnected.",
     "sys_can_type": "You can start typing.",
-    "err_connection_failed": "Connection failed: {error}",
-    "err_cmd_usage": "Usage: /connect <onion_address>",
-    "err_not_connected": "You are not connected. Use /connect <onion_address>",
+    "err_connection_failed": "Connection failed.",
+    "err_cmd_usage": "Check IP and Port.",
+    "err_not_connected": "You are not connected.",
     "prompt_port": "Enter port to listen on (e.g., 5000): ",
-    "msg_peer": "[Peer]: {text}",
-    "sys_tor_starting": "Bootstrapping Tor network (this may take a minute)...",
-    "sys_onion_address": "Your Onion address: {onion}"
+    "msg_peer": "[Peer]: {text}"
 }

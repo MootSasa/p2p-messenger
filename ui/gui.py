@@ -7,7 +7,7 @@ class MessengerGUI(ctk.CTk):
         self.network = None
         self.listen_port = listen_port
         
-        self.title("P2P E2EE Messenger")
+        self.title("P2P Messenger")
         self.geometry("700x500")
         
         self.grid_columnconfigure(0, weight=1)
@@ -64,11 +64,10 @@ class MessengerGUI(ctk.CTk):
     def handle_connection_change(self, is_connected, address):
         def update_ui():
             if is_connected:
-                ip_port = address.split(':')
-                self.status_label.configure(text=_.t('sys_connected', ip=ip_port[0], port=ip_port[1]), text_color="green")
+                self.status_label.configure(text=_.t('sys_connected', address=address), text_color="green")
                 self.show_system_message(_.t('sys_can_type'))
             else:
-                self.status_label.configure(text=_.t('sys_disconnected'), text_color="red")
+                self.status_label.configure(text=_.t('sys_node_started', port=self.listen_port), text_color="gray")
                 self.show_error(_.t('sys_disconnected'))
         self.after(0, update_ui)
 

@@ -3,11 +3,9 @@
     "sys_connected": "Подключено к {address}!",
     "sys_disconnected": "Собеседник отключился.",
     "sys_can_type": "Можете писать сообщения.",
-    "err_connection_failed": "Ошибка подключения: {error}",
-    "err_cmd_usage": "Использование: /connect <onion_address>",
-    "err_not_connected": "Сначала подключитесь: /connect <onion_address>",
-    "prompt_port": "Введите порт для этого узла (например, 5000): ",
-    "msg_peer": "[Собеседник]: {text}",
-    "sys_tor_starting": "Запуск сети Tor (это может занять около минуты)...",
-    "sys_onion_address": "Ваш Onion адрес: {onion}"
+    "err_connection_failed": "Ошибка подключения.",
+    "err_cmd_usage": "Проверьте IP и Порт.",
+    "err_not_connected": "Сначала подключитесь к собеседнику.",
+    "prompt_port": "Введите порт (например, 5000): ",
+    "msg_peer": "[Собеседник]: {text}"
 }
