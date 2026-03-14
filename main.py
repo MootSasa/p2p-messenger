@@ -1,6 +1,6 @@
 from config import HOST
 from core.network import NetworkNode
-from ui.cli import CommandLineInterface
+from ui.gui import MessengerGUI
 from core.i18n import _
 
 def main():
@@ -9,20 +9,18 @@ def main():
     except ValueError:
         return
 
-    ui = CommandLineInterface()
+    app = MessengerGUI(my_port)
     
     node = NetworkNode(
         host=HOST,
         port=my_port,
-        on_message=ui.show_incoming_message,
-        on_status=ui.handle_connection_change
+        on_message=app.show_incoming_message,
+        on_status=app.handle_connection_change
     )
     
-    ui.set_network(node)
-    
-    ui.show_system_message(_.t('sys_node_started', port=my_port))
+    app.set_network(node)
     node.start_listening()
-    ui.start_input_loop()
+    app.mainloop()
 
 if __name__ == "__main__":
     main()
