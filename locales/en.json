@@ -7,5 +7,7 @@
     "err_cmd_usage": "Usage: /connect <IP> <PORT>",
     "err_not_connected": "You are not connected. Use /connect <IP> <PORT>",
     "prompt_port": "Enter port to listen on (e.g., 5000): ",
-    "msg_peer": "[Peer]: {text}"
+    "msg_peer": "[Peer]: {text}",
+    "sys_tor_starting": "Bootstrapping Tor network (this may take a minute)...",
+    "sys_onion_address": "Your Onion address: {onion}"
 }

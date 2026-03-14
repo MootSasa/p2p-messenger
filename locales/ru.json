@@ -7,5 +7,7 @@
     "err_cmd_usage": "Использование: /connect <IP> <PORT>",
     "err_not_connected": "Сначала подключитесь: /connect <IP> <PORT>",
     "prompt_port": "Введите порт для этого узла (например, 5000): ",
-    "msg_peer": "[Собеседник]: {text}"
+    "msg_peer": "[Собеседник]: {text}",
+    "sys_tor_starting": "Запуск сети Tor (это может занять около минуты)...",
+    "sys_onion_address": "Ваш Onion адрес: {onion}"
 }
