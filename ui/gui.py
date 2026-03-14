@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from tkinter import filedialog
 from core.i18n import _
 
 class MessengerGUI(ctk.CTk):
@@ -40,8 +41,11 @@ class MessengerGUI(ctk.CTk):
         self.msg_entry.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
         self.msg_entry.bind("<Return>", lambda e: self.send_message())
         
+        self.file_btn = ctk.CTkButton(self.bottom_frame, text="📁", command=self.send_file, width=40)
+        self.file_btn.grid(row=0, column=1, padx=(0, 5), pady=10)
+
         self.send_btn = ctk.CTkButton(self.bottom_frame, text="Send", command=self.send_message, width=80)
-        self.send_btn.grid(row=0, column=1, padx=10, pady=10)
+        self.send_btn.grid(row=0, column=2, padx=(5, 10), pady=10)
 
     def set_network(self, network_node):
         self.network = network_node
@@ -93,4 +97,18 @@ class MessengerGUI(ctk.CTk):
                 self.show_error(_.t('err_connection_failed', error=""))
         else:
             self.show_error(_.t('err_not_connected'))
+
+    def send_file(self):
+        if not (self.network and self.network.connection):
+            self.show_error(_.t('err_not_connected'))
+            return
             
+        filepath = filedialog.askopenfilename()
+        if filepath:
+            filename = filepath.split('/')[-1]
+            self.show_system_message(f"Отправка файла {filename}...")
+            success = self.network.send_file(filepath)
+            if success:
+                self.append_chat(f"[You]: 📎 Отправлен файл {filename}")
+            else:
+                self.show_error("Ошибка при отправке файла.")

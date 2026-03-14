@@ -9,10 +9,8 @@ class CryptoManager:
     def __init__(self):
         self.ed_private_key = ed25519.Ed25519PrivateKey.generate()
         self.ed_public_key = self.ed_private_key.public_key()
-
         self.x_private_key = x25519.X25519PrivateKey.generate()
         self.x_public_key = self.x_private_key.public_key()
-
         self.shared_secret_key = None
         self.cipher = None
 
@@ -24,35 +22,25 @@ class CryptoManager:
 
     def establish_shared_secret(self, peer_public_bytes: bytes):
         peer_public_key = x25519.X25519PublicKey.from_public_bytes(peer_public_bytes)
-
         shared_secret = self.x_private_key.exchange(peer_public_key)
-
         self.shared_secret_key = HKDF(
             algorithm=hashes.SHA256(),
             length=32,
             salt=None,
             info=b'p2p_messenger_handshake',
         ).derive(shared_secret)
-
         self.cipher = ChaCha20Poly1305(self.shared_secret_key)
 
-    def encrypt_message(self, plaintext: str) -> bytes:
+    def encrypt_data(self, data: bytes) -> bytes:
         if not self.cipher:
-            raise ValueError("Общий ключ еще не установлен!")
-            
+            raise ValueError()
         nonce = os.urandom(12)
-        
-        ciphertext = self.cipher.encrypt(nonce, plaintext.encode('utf-8'), associated_data=None)
-        
-        return nonce + ciphertext
+        return nonce + self.cipher.encrypt(nonce, data, associated_data=None)
 
-    def decrypt_message(self, encrypted_data: bytes) -> str:
+    def decrypt_data(self, encrypted_data: bytes) -> bytes:
         if not self.cipher:
-            raise ValueError("Общий ключ еще не установлен!")
-            
+            raise ValueError()
         nonce = encrypted_data[:12]
         ciphertext = encrypted_data[12:]
-        
-        plaintext_bytes = self.cipher.decrypt(nonce, ciphertext, associated_data=None)
-        return plaintext_bytes.decode('utf-8')
+        return self.cipher.decrypt(nonce, ciphertext, associated_data=None)
     
