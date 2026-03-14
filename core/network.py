@@ -1,11 +1,13 @@
 import socket
 import threading
+import socks
 from core.crypto import CryptoManager
 
 class NetworkNode:
-    def __init__(self, host, port, on_message, on_status):
+    def __init__(self, host, port, socks_port, on_message, on_status):
         self.host = host
         self.port = port
+        self.socks_port = socks_port
         self.connection = None
         self.crypto = CryptoManager()
         self.on_message = on_message
@@ -25,7 +27,7 @@ class NetworkNode:
                 if self.connection is None:
                     self.connection = conn
                     if self._perform_handshake(is_initiator=False):
-                        self.on_status(True, f"{addr[0]}:{addr[1]}")
+                        self.on_status(True, "Incoming connection")
                         threading.Thread(target=self._receive_loop, daemon=True).start()
                     else:
                         self._disconnect()
@@ -34,14 +36,15 @@ class NetworkNode:
             except Exception:
                 break
 
-    def connect_to(self, target_ip, target_port) -> bool:
+    def connect_to(self, target_host, target_port) -> bool:
         try:
-            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            conn.connect((target_ip, target_port))
+            conn = socks.socksocket()
+            conn.set_proxy(socks.SOCKS5, "127.0.0.1", self.socks_port)
+            conn.connect((target_host, target_port))
             self.connection = conn
             
             if self._perform_handshake(is_initiator=True):
-                self.on_status(True, f"{target_ip}:{target_port}")
+                self.on_status(True, f"{target_host}")
                 threading.Thread(target=self._receive_loop, daemon=True).start()
                 return True
             else:
