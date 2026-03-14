@@ -1,0 +1,11 @@
+{
+    "sys_node_started": "Node started. Listening on port {port}...",
+    "sys_connected": "Connected to {address}!",
+    "sys_disconnected": "Peer disconnected.",
+    "sys_can_type": "You can start typing.",
+    "err_connection_failed": "Connection failed.",
+    "err_cmd_usage": "Check IP and Port.",
+    "err_not_connected": "You are not connected.",
+    "prompt_port": "Enter port to listen on (e.g., 5000): ",
+    "msg_peer": "[Peer]: {text}"
+}
