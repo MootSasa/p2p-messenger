@@ -4,13 +4,15 @@ import os
 from core.crypto import CryptoManager
 
 class NetworkNode:
-    def __init__(self, host, port, on_message, on_status):
+    def __init__(self, host, port, username, on_message, on_status, on_peer_name):
         self.host = host
         self.port = port
+        self.username = username
         self.connection = None
         self.crypto = CryptoManager()
         self.on_message = on_message
         self.on_status = on_status
+        self.on_peer_name = on_peer_name
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((self.host, self.port))
@@ -27,6 +29,7 @@ class NetworkNode:
                     self.connection = conn
                     if self._perform_handshake(False):
                         self.on_status(True, f"{addr[0]}:{addr[1]}")
+                        self._send_username()
                         threading.Thread(target=self._receive_loop, daemon=True).start()
                     else:
                         self._disconnect()
@@ -42,6 +45,7 @@ class NetworkNode:
             self.connection = conn
             if self._perform_handshake(True):
                 self.on_status(True, f"{target_ip}:{target_port}")
+                self._send_username()
                 threading.Thread(target=self._receive_loop, daemon=True).start()
                 return True
             else:
@@ -66,6 +70,15 @@ class NetworkNode:
             return True
         except Exception:
             return False
+
+    def _send_username(self):
+        if self.connection and self.crypto.cipher:
+            try:
+                payload = b'\x03' + self.username.encode('utf-8')
+                encrypted_data = self.crypto.encrypt_data(payload)
+                self.connection.sendall(len(encrypted_data).to_bytes(4, 'big') + encrypted_data)
+            except Exception:
+                pass
 
     def send_message(self, text: str) -> bool:
         if self.connection and self.crypto.cipher:
@@ -118,13 +131,14 @@ class NetworkNode:
                     sep_idx = content.find(b'\x00')
                     filename = content[:sep_idx].decode('utf-8')
                     file_data = content[sep_idx+1:]
-                    
                     os.makedirs('downloads', exist_ok=True)
                     save_path = os.path.join('downloads', filename)
                     with open(save_path, 'wb') as f:
                         f.write(file_data)
-                    
                     self.on_message(f"📎 Файл получен: {filename}")
+                elif msg_type == 3:
+                    peer_name = decrypted_data[1:].decode('utf-8')
+                    self.on_peer_name(peer_name)
             except Exception:
                 break
         self._disconnect()

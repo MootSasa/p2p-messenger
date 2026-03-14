@@ -3,12 +3,14 @@ from tkinter import filedialog
 from core.i18n import _
 
 class MessengerGUI(ctk.CTk):
-    def __init__(self, listen_port):
+    def __init__(self, listen_port, username):
         super().__init__()
         self.network = None
         self.listen_port = listen_port
+        self.my_username = username
+        self.peer_username = "Peer"
         
-        self.title("P2P Messenger")
+        self.title(f"P2P Messenger - {self.my_username}")
         self.geometry("700x500")
         
         self.grid_columnconfigure(0, weight=1)
@@ -63,7 +65,11 @@ class MessengerGUI(ctk.CTk):
         self.after(0, self.append_chat, f"[-] {text}")
 
     def show_incoming_message(self, text):
-        self.after(0, self.append_chat, _.t('msg_peer', text=text))
+        self.after(0, self.append_chat, f"[{self.peer_username}]: {text}")
+
+    def update_peer_name(self, name):
+        self.peer_username = name
+        self.show_system_message(f"Собеседник использует имя: {name}")
 
     def handle_connection_change(self, is_connected, address):
         def update_ui():
@@ -71,6 +77,7 @@ class MessengerGUI(ctk.CTk):
                 self.status_label.configure(text=_.t('sys_connected', address=address), text_color="green")
                 self.show_system_message(_.t('sys_can_type'))
             else:
+                self.peer_username = "Peer"
                 self.status_label.configure(text=_.t('sys_node_started', port=self.listen_port), text_color="gray")
                 self.show_error(_.t('sys_disconnected'))
         self.after(0, update_ui)
@@ -91,7 +98,7 @@ class MessengerGUI(ctk.CTk):
         if self.network and self.network.connection:
             success = self.network.send_message(text)
             if success:
-                self.append_chat(f"[You]: {text}")
+                self.append_chat(f"[{self.my_username}]: {text}")
                 self.msg_entry.delete(0, "end")
             else:
                 self.show_error(_.t('err_connection_failed', error=""))
@@ -109,6 +116,6 @@ class MessengerGUI(ctk.CTk):
             self.show_system_message(f"Отправка файла {filename}...")
             success = self.network.send_file(filepath)
             if success:
-                self.append_chat(f"[You]: 📎 Отправлен файл {filename}")
+                self.append_chat(f"[{self.my_username}]: 📎 Отправлен файл {filename}")
             else:
                 self.show_error("Ошибка при отправке файла.")
