@@ -22,8 +22,7 @@ class CommandLineInterface:
 
     def handle_connection_change(self, is_connected, address):
         if is_connected:
-            ip_port = address.split(':')
-            self.show_system_message(_.t('sys_connected', ip=ip_port[0], port=ip_port[1]))
+            self.show_system_message(_.t('sys_connected', address=address))
             self.show_system_message(_.t('sys_can_type'))
         else:
             self.show_error(_.t('sys_disconnected'))
@@ -37,9 +36,13 @@ class CommandLineInterface:
 
                 if command.startswith("/connect"):
                     parts = command.split()
-                    if len(parts) == 3:
-                        ip, port = parts[1], int(parts[2])
-                        result = self.network.connect_to(ip, port)
+                    if len(parts) == 2:
+                        target = parts[1]
+                        port = 80
+                        if ":" in target:
+                            target, port_str = target.split(":")
+                            port = int(port_str)
+                        result = self.network.connect_to(target, port)
                         if not result:
                             self.show_error(_.t('err_connection_failed', error=""))
                     else:

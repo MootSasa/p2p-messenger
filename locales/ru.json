@@ -1,11 +1,11 @@
 {
     "sys_node_started": "Узел запущен. Слушаю порт {port}...",
-    "sys_connected": "Подключено к {ip}:{port}!",
+    "sys_connected": "Подключено к {address}!",
     "sys_disconnected": "Собеседник отключился.",
     "sys_can_type": "Можете писать сообщения.",
-    "err_connection_failed": "Ошибка подключения: {error}",
-    "err_cmd_usage": "Использование: /connect <IP> <PORT>",
-    "err_not_connected": "Сначала подключитесь: /connect <IP> <PORT>",
-    "prompt_port": "Введите порт для этого узла (например, 5000): ",
+    "err_connection_failed": "Ошибка подключения.",
+    "err_cmd_usage": "Проверьте IP и Порт.",
+    "err_not_connected": "Сначала подключитесь к собеседнику.",
+    "prompt_port": "Введите порт (например, 5000): ",
     "msg_peer": "[Собеседник]: {text}"
 }

@@ -1,15 +1,18 @@
 import socket
 import threading
+import os
 from core.crypto import CryptoManager
 
 class NetworkNode:
-    def __init__(self, host, port, on_message, on_status):
+    def __init__(self, host, port, username, on_message, on_status, on_peer_name):
         self.host = host
         self.port = port
+        self.username = username
         self.connection = None
         self.crypto = CryptoManager()
         self.on_message = on_message
         self.on_status = on_status
+        self.on_peer_name = on_peer_name
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind((self.host, self.port))
@@ -24,8 +27,9 @@ class NetworkNode:
                 conn, addr = self.server_socket.accept()
                 if self.connection is None:
                     self.connection = conn
-                    if self._perform_handshake(is_initiator=False):
+                    if self._perform_handshake(False):
                         self.on_status(True, f"{addr[0]}:{addr[1]}")
+                        self._send_username()
                         threading.Thread(target=self._receive_loop, daemon=True).start()
                     else:
                         self._disconnect()
@@ -39,9 +43,9 @@ class NetworkNode:
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect((target_ip, target_port))
             self.connection = conn
-            
-            if self._perform_handshake(is_initiator=True):
+            if self._perform_handshake(True):
                 self.on_status(True, f"{target_ip}:{target_port}")
+                self._send_username()
                 threading.Thread(target=self._receive_loop, daemon=True).start()
                 return True
             else:
@@ -60,25 +64,45 @@ class NetworkNode:
             else:
                 peer_pub_bytes = self.connection.recv(32)
                 self.connection.sendall(my_pub_bytes)
-
             if len(peer_pub_bytes) != 32:
                 return False
-
             self.crypto.establish_shared_secret(peer_pub_bytes)
             return True
         except Exception:
             return False
 
+    def _send_username(self):
+        if self.connection and self.crypto.cipher:
+            try:
+                payload = b'\x03' + self.username.encode('utf-8')
+                encrypted_data = self.crypto.encrypt_data(payload)
+                self.connection.sendall(len(encrypted_data).to_bytes(4, 'big') + encrypted_data)
+            except Exception:
+                pass
+
     def send_message(self, text: str) -> bool:
         if self.connection and self.crypto.cipher:
             try:
-                encrypted_data = self.crypto.encrypt_message(text)
-                msg_length = len(encrypted_data).to_bytes(4, byteorder='big')
-                self.connection.sendall(msg_length + encrypted_data)
+                payload = b'\x01' + text.encode('utf-8')
+                encrypted_data = self.crypto.encrypt_data(payload)
+                self.connection.sendall(len(encrypted_data).to_bytes(4, 'big') + encrypted_data)
                 return True
             except Exception:
                 self._disconnect()
-                return False
+        return False
+
+    def send_file(self, filepath: str) -> bool:
+        if self.connection and self.crypto.cipher:
+            try:
+                filename = os.path.basename(filepath).encode('utf-8')
+                with open(filepath, 'rb') as f:
+                    file_data = f.read()
+                payload = b'\x02' + filename + b'\x00' + file_data
+                encrypted_data = self.crypto.encrypt_data(payload)
+                self.connection.sendall(len(encrypted_data).to_bytes(4, 'big') + encrypted_data)
+                return True
+            except Exception:
+                self._disconnect()
         return False
 
     def _receive_loop(self):
@@ -87,24 +111,36 @@ class NetworkNode:
                 length_prefix = self.connection.recv(4)
                 if not length_prefix:
                     break
-                
-                msg_length = int.from_bytes(length_prefix, byteorder='big')
+                msg_length = int.from_bytes(length_prefix, 'big')
                 encrypted_data = b""
-                
                 while len(encrypted_data) < msg_length:
                     chunk = self.connection.recv(min(msg_length - len(encrypted_data), 4096))
                     if not chunk:
                         break
                     encrypted_data += chunk
-
                 if not encrypted_data:
                     break
-
-                decrypted_text = self.crypto.decrypt_message(encrypted_data)
-                self.on_message(decrypted_text)
+                
+                decrypted_data = self.crypto.decrypt_data(encrypted_data)
+                msg_type = decrypted_data[0]
+                
+                if msg_type == 1:
+                    self.on_message(decrypted_data[1:].decode('utf-8'))
+                elif msg_type == 2:
+                    content = decrypted_data[1:]
+                    sep_idx = content.find(b'\x00')
+                    filename = content[:sep_idx].decode('utf-8')
+                    file_data = content[sep_idx+1:]
+                    os.makedirs('downloads', exist_ok=True)
+                    save_path = os.path.join('downloads', filename)
+                    with open(save_path, 'wb') as f:
+                        f.write(file_data)
+                    self.on_message(f"📎 Файл получен: {filename}")
+                elif msg_type == 3:
+                    peer_name = decrypted_data[1:].decode('utf-8')
+                    self.on_peer_name(peer_name)
             except Exception:
                 break
-                
         self._disconnect()
 
     def _disconnect(self):
@@ -115,3 +151,4 @@ class NetworkNode:
                 pass
             self.connection = None
             self.on_status(False, "disconnected")
+            
